@@ -4,6 +4,9 @@
 # This code demonstrates use of a basic Q-network (without target network)
 # to solve OpenGym CartPole-v0 problem
 #
+# Made as part of blog series Let's make a DQN, available at: 
+# https://jaromiru.com/2016/09/27/lets-make-a-dqn-implementation/
+# 
 # author: Jaromir Janisch, 2016
 
 
@@ -84,14 +87,14 @@ class Agent:
         self.brain = Brain(stateCnt, actionCnt)
         self.memory = Memory(MEMORY_CAPACITY)
         
-    def observe(self, sample):  # in (s, a, r, s_) format
-        self.memory.add(sample)        
-
     def act(self, s):
         if random.random() < self.epsilon:
             return random.randint(0, self.actionCnt-1)
         else:
             return numpy.argmax(self.brain.predictOne(s))
+
+    def observe(self, sample):  # in (s, a, r, s_) format
+        self.memory.add(sample)        
 
     def replay(self):    
         # slowly decrease Epsilon based on our eperience
@@ -117,7 +120,6 @@ class Agent:
             s = o[0]; a = o[1]; r = o[2]; s_ = o[3]
             
             t = p[i]
-            oldVal = t[a]
             if s_ is None:
                 t[a] = r
             else:
@@ -154,16 +156,12 @@ class Environment:
             s = s_
             R += r
 
-
             if done:
                 break
 
         print("Total reward:", R)
 
 #-------------------- MAIN ----------------------------
-numpy.set_printoptions(threshold=np.inf)
-numpy.set_printoptions(precision=4)
-
 PROBLEM = 'CartPole-v0'
 env = Environment(PROBLEM)
 
