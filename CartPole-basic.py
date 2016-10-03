@@ -2,10 +2,10 @@
 # -------------------
 #
 # This code demonstrates use of a basic Q-network (without target network)
-# to solve OpenGym CartPole-v0 problem
+# to solve OpenGym CartPole-v0 problem.
 #
 # Made as part of blog series Let's make a DQN, available at: 
-# https://jaromiru.com/2016/09/27/lets-make-a-dqn-implementation/
+# https://jaromiru.com/2016/10/03/lets-make-a-dqn-implementation/
 # 
 # author: Jaromir Janisch, 2016
 
@@ -96,11 +96,11 @@ class Agent:
     def observe(self, sample):  # in (s, a, r, s_) format
         self.memory.add(sample)        
 
-    def replay(self):    
         # slowly decrease Epsilon based on our eperience
         self.steps += 1
         self.epsilon = MIN_EPSILON + (MAX_EPSILON - MIN_EPSILON) * math.exp(-LAMBDA * self.steps)
 
+    def replay(self):    
         batch = self.memory.sample(BATCH_SIZE)
         batchLen = len(batch)
 
