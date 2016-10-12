@@ -5,7 +5,7 @@
 # in an OpenGym MountainCar-v0 environment.
 #
 # Made as part of blog series Let's make a DQN, available at: 
-# https://jaromiru.com/2016/09/27/lets-make-a-dqn-theory/
+# https://jaromiru.com/2016/10/12/lets-make-a-dqn-debugging/
 # 
 # author: Jaromir Janisch, 2016
 
