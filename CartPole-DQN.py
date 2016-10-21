@@ -14,8 +14,7 @@
 # import os    
 # os.environ['THEANO_FLAGS'] = "device=gpu,floatX=float32"  
 
-import random, numpy, math, gym
-import pickle, sys
+import random, numpy, math, gym, sys
 
 def hubert_loss(y_true, y_pred):    # sqrt(1+a^2)-1
     err = y_pred - y_true
