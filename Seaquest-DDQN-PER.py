@@ -5,7 +5,7 @@
 # in an OpenGym Seaquest-v0 environment.
 #
 # Made as part of blog series Let's make a DQN, available at: 
-# https://jaromiru.com/2016/09/27/lets-make-a-dqn-theory/
+# https://jaromiru.com/2016/11/07/lets-make-a-dqn-double-learning-and-prioritized-experience-replay/
 # 
 # author: Jaromir Janisch, 2016
 
@@ -136,7 +136,7 @@ class Agent:
         self.actionCnt = actionCnt
 
         self.brain = Brain(stateCnt, actionCnt)
-        self.memory = Memory(MEMORY_CAPACITY)
+        # self.memory = Memory(MEMORY_CAPACITY)
         
     def act(self, s):
         if random.random() < self.epsilon:
@@ -269,7 +269,6 @@ try:
     agent.memory = randomAgent.memory
 
     randomAgent = None
-    samples = None
 
     print("Starting learning")
     while True:
