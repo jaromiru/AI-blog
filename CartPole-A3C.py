@@ -98,6 +98,9 @@ class Brain:
 			return
 
 		with self.lock_queue:
+			if len(self.train_queue[0]) < MIN_BATCH:	# more thread could have passed without lock
+				return 									# we can't yield inside lock
+
 			s, a, r, s_, s_mask = self.train_queue
 			self.train_queue = [ [], [], [], [], [] ]
 
