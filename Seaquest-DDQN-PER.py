@@ -118,7 +118,7 @@ class Memory:   # stored as ( s, a, r, s_ ) in SumTree
         self.tree.update(idx, p)
 
 #-------------------- AGENT ---------------------------
-MEMORY_CAPACITY = 20000
+MEMORY_CAPACITY = 200000
 
 BATCH_SIZE = 32
 
