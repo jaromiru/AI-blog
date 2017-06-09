@@ -9,16 +9,26 @@
 # 
 # author: Jaromir Janisch, 2016
 
-
-#--- enable this to run on GPU
-# import os    
-# os.environ['THEANO_FLAGS'] = "device=gpu,floatX=float32"  
-
 import random, numpy, math, gym, sys
+from keras import backend as K
 
-def hubert_loss(y_true, y_pred):    # sqrt(1+a^2)-1
-    err = y_pred - y_true
-    return K.mean( K.sqrt(1+K.square(err))-1, axis=-1 )
+import tensorflow as tf
+
+#----------
+HUBER_LOSS_DELTA = 1.0
+LEARNING_RATE = 0.00025
+
+#----------
+def huber_loss(y_true, y_pred):
+    err = y_true - y_pred
+
+    cond = K.abs(err) < HUBER_LOSS_DELTA
+    L2 = 0.5 * K.square(err)
+    L1 = HUBER_LOSS_DELTA * (K.abs(err) - 0.5 * HUBER_LOSS_DELTA)
+
+    loss = tf.where(cond, L2, L1)   # Keras does not cover where function in tensorflow :-(
+
+    return K.mean(loss)
 
 #-------------------- BRAIN ---------------------------
 from keras.models import Sequential
@@ -36,16 +46,16 @@ class Brain:
     def _createModel(self):
         model = Sequential()
 
-        model.add(Dense(output_dim=64, activation='relu', input_dim=stateCnt))
-        model.add(Dense(output_dim=actionCnt, activation='linear'))
+        model.add(Dense(units=64, activation='relu', input_dim=stateCnt))
+        model.add(Dense(units=actionCnt, activation='linear'))
 
-        opt = RMSprop(lr=0.00025)
-        model.compile(loss=hubert_loss, optimizer=opt)
+        opt = RMSprop(lr=LEARNING_RATE)
+        model.compile(loss=huber_loss, optimizer=opt)
 
         return model
 
-    def train(self, x, y, epoch=1, verbose=0):
-        self.model.fit(x, y, batch_size=64, nb_epoch=epoch, verbose=verbose)
+    def train(self, x, y, epochs=1, verbose=0):
+        self.model.fit(x, y, batch_size=64, epochs=epochs, verbose=verbose)
 
     def predict(self, s, target=False):
         if target:
@@ -114,6 +124,7 @@ class Agent:
         if self.steps % UPDATE_TARGET_FREQUENCY == 0:
             self.brain.updateTargetModel()
 
+        # debug the Q function in poin S
         if self.steps % 100 == 0:
             S = numpy.array([-0.01335408, -0.04600273, -0.00677248, 0.01517507])
             pred = agent.brain.predictOne(S)

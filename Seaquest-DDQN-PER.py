@@ -9,11 +9,6 @@
 # 
 # author: Jaromir Janisch, 2016
 
-#--- enable this to run on GPU
-import os    
-os.environ['THEANO_FLAGS'] = "device=gpu,floatX=float32"  
-#---
-
 import random, numpy, math, gym, scipy
 from SumTree import SumTree
 
@@ -21,7 +16,21 @@ IMAGE_WIDTH = 84
 IMAGE_HEIGHT = 84
 IMAGE_STACK = 2
 
+HUBER_LOSS_DELTA = 2.0
+LEARNING_RATE = 0.00025
+
 #-------------------- UTILITIES -----------------------
+def huber_loss(y_true, y_pred):
+    err = y_true - y_pred
+
+    cond = K.abs(err) < HUBER_LOSS_DELTA
+    L2 = 0.5 * K.square(err)
+    L1 = HUBER_LOSS_DELTA * (K.abs(err) - 0.5 * HUBER_LOSS_DELTA)
+
+    loss = tf.where(cond, L2, L1)   # Keras does not cover where function in tensorflow :-(
+
+    return K.mean(loss)
+
 def processImage( img ):
     rgb = scipy.misc.imresize(img, (IMAGE_WIDTH, IMAGE_HEIGHT), interp='bilinear')
 
@@ -30,10 +39,6 @@ def processImage( img ):
 
     o = gray.astype('float32') / 128 - 1    # normalize
     return o
-
-def hubert_loss(y_true, y_pred):    # sqrt(1+a^2)-1
-    err = y_pred - y_true
-    return K.mean( K.sqrt(1+K.square(err))-1, axis=-1 )
 
 #-------------------- BRAIN ---------------------------
 from keras.models import Sequential
@@ -51,21 +56,21 @@ class Brain:
     def _createModel(self):
         model = Sequential()
 
-        model.add(Convolution2D(32, 8, 8, subsample=(4,4), activation='relu', input_shape=(self.stateCnt)))
-        model.add(Convolution2D(64, 4, 4, subsample=(2,2), activation='relu'))
-        model.add(Convolution2D(64, 3, 3, activation='relu'))
+        model.add(Conv2D(32, (8, 8), strides=(4,4), activation='relu', input_shape=(self.stateCnt), data_format='channels_first'))
+        model.add(Conv2D(64, (4, 4), strides=(2,2), activation='relu'))
+        model.add(Conv2D(64, (3, 3), activation='relu'))
         model.add(Flatten())
-        model.add(Dense(output_dim=512, activation='relu'))
+        model.add(Dense(units=512, activation='relu'))
 
-        model.add(Dense(output_dim=actionCnt, activation='linear'))
+        model.add(Dense(units=actionCnt, activation='linear'))
 
-        opt = RMSprop(lr=0.00025)
-        model.compile(loss=hubert_loss, optimizer=opt)
+        opt = RMSprop(lr=LEARNING_RATE)
+        model.compile(loss=huber_loss, optimizer=opt)
 
         return model
 
-    def train(self, x, y, epoch=1, verbose=0):
-        self.model.fit(x, y, batch_size=32, nb_epoch=epoch, verbose=verbose)
+    def train(self, x, y, epochs=1, verbose=0):
+        self.model.fit(x, y, batch_size=32, epochs=epochs, verbose=verbose)
 
     def predict(self, s, target=False):
         if target:
@@ -113,7 +118,7 @@ class Memory:   # stored as ( s, a, r, s_ ) in SumTree
         self.tree.update(idx, p)
 
 #-------------------- AGENT ---------------------------
-MEMORY_CAPACITY = 200000 
+MEMORY_CAPACITY = 20000
 
 BATCH_SIZE = 32
 
@@ -235,6 +240,8 @@ class Environment:
             r = 0
             img, r, done, info = self.env.step(a)
             s_ = numpy.array([s[1], processImage(img)]) #last two screens
+
+            r = np.clip(r, -1, 1)   # clip reward to [-1, 1]
 
             if done: # terminal state
                 s_ = None
