@@ -144,8 +144,8 @@ class Agent:
         states = numpy.array([ o[0] for o in batch ])
         states_ = numpy.array([ (no_state if o[3] is None else o[3]) for o in batch ])
 
-        p = agent.brain.predict(states)
-        p_ = agent.brain.predict(states_, target=True)
+        p = self.brain.predict(states)
+        p_ = self.brain.predict(states_, target=True)
 
         x = numpy.zeros((batchLen, self.stateCnt))
         y = numpy.zeros((batchLen, self.actionCnt))
